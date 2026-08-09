@@ -1,0 +1,14 @@
+aws_region                     = "us-east-1"
+project_name                   = "project-bedrock"
+project_tag                    = "tinyuka-2025-capstone"
+environment                    = "prod"
+owner                          = "oluwagbenga-george-oyewole"
+student_id                     = "alt-soe-tin-0007"
+eks_cluster_version            = "1.34"
+node_instance_type             = "t3.medium"
+node_desired_size              = 2
+node_min_size                  = 1
+node_max_size                  = 4
+log_retention_days             = 30
+budget_limit_usd               = "20"
+budget_alert_threshold_percent = 80
