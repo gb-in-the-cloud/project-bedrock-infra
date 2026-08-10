@@ -21,7 +21,7 @@
 resource "aws_iam_role" "cluster-role" {
   name = "${var.project_name}-cluster-role"
 
-  assume_role_policy = jsonencode ({
+  assume_role_policy = jsonencode({
     Version = "2012-10-17"
     Statement = [{
       Action    = "sts:AssumeRole"
@@ -32,15 +32,15 @@ resource "aws_iam_role" "cluster-role" {
 }
 
 resource "aws_iam_role_policy_attachment" "cluster-policy" {
-    role       = aws_iam_role.cluster-role.name
-    policy_arn = "arn:aws:iam::aws:policy/AmazonEKSClusterPolicy"
+  role       = aws_iam_role.cluster-role.name
+  policy_arn = "arn:aws:iam::aws:policy/AmazonEKSClusterPolicy"
 }
 
 #---IAM: Node Group Role ---#
 resource "aws_iam_role" "nodes" {
-    name = "${var.project_name}-node-role"
+  name = "${var.project_name}-node-role"
 
-    assume_role_policy = jsonencode({
+  assume_role_policy = jsonencode({
     Version = "2012-10-17"
     Statement = [{
       Action    = "sts:AssumeRole"
@@ -122,23 +122,23 @@ resource "aws_eks_cluster" "main" {
   vpc_config {
     subnet_ids              = concat(var.private_subnet_ids, var.public_subnet_ids)
     security_group_ids      = [aws_security_group.cluster.id]
-    endpoint_private_access = true  # kubectl from inside VPC
-    endpoint_public_access  = true  # kubectl from GitHub Actions runner
+    endpoint_private_access = true # kubectl from inside VPC
+    endpoint_public_access  = true # kubectl from GitHub Actions runner
   }
 
   # Control plane audit logging — required for security and compliance
   enabled_cluster_log_types = [
-    "api",              # All API server calls
-    "audit",            # Security audit trail
-    "authenticator",    # Authentication events
+    "api",           # All API server calls
+    "audit",         # Security audit trail
+    "authenticator", # Authentication events
     "controllerManager",
     "scheduler"
   ]
 
   # Encrypt Kubernetes Secrets at rest with KMS
   encryption_config {
-    provider   { key_arn = aws_kms_key.eks.arn }
-    resources  = ["secrets"]
+    provider { key_arn = aws_kms_key.eks.arn }
+    resources = ["secrets"]
   }
 
   access_config {
@@ -173,7 +173,7 @@ resource "aws_eks_node_group" "main" {
   cluster_name    = aws_eks_cluster.main.name
   node_group_name = "${var.project_name}-node-group"
   node_role_arn   = aws_iam_role.nodes.arn
-  subnet_ids      = var.private_subnet_ids  # Always private
+  subnet_ids      = var.private_subnet_ids # Always private
 
   instance_types = [var.node_instance_type]
   ami_type       = "AL2023_x86_64_STANDARD"
@@ -187,7 +187,7 @@ resource "aws_eks_node_group" "main" {
   }
 
   update_config {
-    max_unavailable = 1  # Replace one node at a time
+    max_unavailable = 1 # Replace one node at a time
   }
 
   depends_on = [

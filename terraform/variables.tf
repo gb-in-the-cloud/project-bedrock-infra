@@ -16,8 +16,8 @@ variable "project_name" {
 
 variable "project_tag" {
   description = "Project tag for AWS resources. Used in default_tags."
-  type    = string
-  default = "tinyuka-2025-capstone"
+  type        = string
+  default     = "tinyuka-2025-capstone"
 }
 
 variable "environment" {
@@ -45,7 +45,7 @@ variable "owner" {
 
 variable "student_id" {
   description = "Student ID for tagging."
-  type = string
+  type        = string
 }
 
 variable "cicd_iam_arn" {
@@ -54,8 +54,8 @@ variable "cicd_iam_arn" {
     Gets cluster-admin access so pipelines can deploy to EKS.
     Defaults to the identity running terraform apply if empty.
   EOT
-  type    = string
-  default = ""
+  type        = string
+  default     = ""
 }
 
 # ── Networking ────────────────────────────────────────────────────────────────
@@ -138,8 +138,8 @@ variable "log_retention_days" {
     30 = balanced cost vs debugging window.
     Without a limit, logs accumulate and costs grow unbounded.
   EOT
-  type    = number
-  default = 30
+  type        = number
+  default     = 30
 
   validation {
     condition     = contains([1, 3, 5, 7, 14, 30, 60, 90, 180, 365], var.log_retention_days)
@@ -171,7 +171,7 @@ variable "budget_alert_email" {
     Email for budget alerts.
     AWS sends a confirmation email — click it or alerts won't fire.
   EOT
-  type = string
+  type        = string
 
   validation {
     condition     = can(regex("^[^@]+@[^@]+\\.[^@]+$", var.budget_alert_email))

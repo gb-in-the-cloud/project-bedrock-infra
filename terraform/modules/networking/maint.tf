@@ -9,8 +9,8 @@
 
 resource "aws_vpc" "main" {
   cidr_block           = var.vpc_cidr
-  enable_dns_hostnames = true  # Required for EKS node registration
-  enable_dns_support   = true  # Required for EKS service discovery
+  enable_dns_hostnames = true # Required for EKS node registration
+  enable_dns_support   = true # Required for EKS service discovery
 
   tags = {
     Name = "${var.project_name}-vpc"
@@ -36,8 +36,8 @@ resource "aws_subnet" "public" {
   tags = {
     Name = "${var.project_name}-public-${var.availability_zones[count.index]}"
     # AWS Load Balancer Controller uses this tag to place internet-facing ALBs
-    "kubernetes.io/role/elb"                              = "1"
-    "kubernetes.io/cluster/${var.project_name}-cluster"   = "shared"
+    "kubernetes.io/role/elb"                            = "1"
+    "kubernetes.io/cluster/${var.project_name}-cluster" = "shared"
   }
 }
 
@@ -51,8 +51,8 @@ resource "aws_subnet" "private" {
   tags = {
     Name = "${var.project_name}-private-${var.availability_zones[count.index]}"
     # AWS Load Balancer Controller uses this tag to place internal ALBs
-    "kubernetes.io/role/internal-elb"                     = "1"
-    "kubernetes.io/cluster/${var.project_name}-cluster"   = "shared"
+    "kubernetes.io/role/internal-elb"                   = "1"
+    "kubernetes.io/cluster/${var.project_name}-cluster" = "shared"
   }
 }
 
@@ -65,7 +65,7 @@ resource "aws_eip" "nat" {
 
 resource "aws_nat_gateway" "main" {
   allocation_id = aws_eip.nat.id
-  subnet_id     = aws_subnet.public[0].id  # First public subnet only
+  subnet_id     = aws_subnet.public[0].id # First public subnet only
 
   depends_on = [aws_internet_gateway.main]
   tags       = { Name = "${var.project_name}-nat" }
