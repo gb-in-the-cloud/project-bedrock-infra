@@ -1,4 +1,5 @@
 terraform.tfvars.example
+terraform.tfvars
 # OS
 .DS_Store
 Thumbs.db
