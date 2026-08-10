@@ -1,9 +1,16 @@
 terraform.tfvars.example
 terraform.tfvars
+.terraform/
+terraform/.terraform/
+**/.terraform/
+*.tfstate
+*.tfstate.backup
+tfplan
+*.zip
 # OS
 .DS_Store
 Thumbs.db
 
 # IDE
 .vscode/
-.idea/
+.idea/**/.terraform/
