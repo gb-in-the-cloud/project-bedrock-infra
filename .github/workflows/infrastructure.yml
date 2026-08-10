@@ -12,9 +12,9 @@ on:
       action:
         description: 'Action to run'
         required: true
-        default: 'plan'
+        default: 'init'
         type: choice
-        options: [plan, apply, destroy]
+        options: [init, plan, apply, destroy]
 
 permissions:
   contents: read
