@@ -5,7 +5,7 @@
 set -euo pipefail
 
 TF_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../terraform" && pwd)"
-STATE_BUCKET="${TF_STATE_BUCKET:-project-bedrock-tfstate-alt-soe-tin-0007}"
+STATE_BUCKET="${TF_STATE_BUCKET:-project-bedrock-tfstate-alt-soe-tin-025-0007}"
 AWS_REGION="${AWS_REGION:-us-east-1}"
 
 # ── Helpers ───────────────────────────────────────────────────────────────────
