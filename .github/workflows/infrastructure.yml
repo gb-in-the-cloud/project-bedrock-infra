@@ -1,0 +1,285 @@
+name: Infrastructure Deploy
+
+on:
+  push:
+    branches: [main]
+    paths: ['terraform/**', '.github/workflows/infrastructure.yml']
+  pull_request:
+    branches: [main]
+    paths: ['terraform/**']
+  workflow_dispatch:
+    inputs:
+      action:
+        description: 'Action to run'
+        required: true
+        default: 'init'
+        type: choice
+        options: [init, plan, apply, destroy]
+
+permissions:
+  contents: read
+  pull-requests: write
+
+env:
+  TF_VERSION:  "1.11.0"
+  WORKING_DIR: ./terraform
+
+jobs:
+  # ── Validate ────────────────────────────────────────────────────────────────
+  validate:
+    name: Validate Terraform
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ${{ env.WORKING_DIR }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ env.TF_VERSION }}
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id:     ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region:            ${{ vars.AWS_REGION }}
+
+      - name: Terraform Init
+        run: |
+          terraform init \
+            -backend-config="bucket=${{ secrets.TF_STATE_BUCKET }}" \
+            -backend-config="region=${{ vars.AWS_REGION }}"
+
+      - name: Terraform Format Check
+        run: terraform fmt -check -recursive
+
+      - name: Terraform Validate
+        run: terraform validate
+
+  # ── Plan ────────────────────────────────────────────────────────────────────
+  plan:
+    name: Terraform Plan
+    runs-on: ubuntu-latest
+    needs: validate
+    defaults:
+      run:
+        working-directory: ${{ env.WORKING_DIR }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ env.TF_VERSION }}
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id:     ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region:            ${{ vars.AWS_REGION }}
+
+      - name: Create tfvars
+        run: |
+          cat > terraform.tfvars << EOF
+          aws_region                     = "${{ vars.AWS_REGION }}"
+          project_name                   = "project-bedrock"
+          project_tag                    = "tinyuka-2025-capstone"
+          environment                    = "prod"
+          owner                          = "oluwagbenga-george-oyewole"
+          student_id                     = "${{ vars.STUDENT_ID }}"
+          eks_cluster_version            = "1.34"
+          node_instance_type             = "t3.medium"
+          node_desired_size              = 2
+          node_min_size                  = 1
+          node_max_size                  = 4
+          log_retention_days             = 30
+          budget_limit_usd               = "20"
+          budget_alert_threshold_percent = 80
+          budget_alert_email             = "${{ secrets.BUDGET_ALERT_EMAIL }}"
+          cicd_iam_arn                   = "${{ secrets.CICD_IAM_ARN }}"
+          EOF
+
+      - name: Terraform Init
+        run: |
+          terraform init \
+            -backend-config="bucket=${{ secrets.TF_STATE_BUCKET }}" \
+            -backend-config="region=${{ vars.AWS_REGION }}"
+
+      - name: Terraform Plan
+        id: plan
+        run: |
+          terraform plan \
+           -var-file=terraform.tfvars \
+           -var="budget_alert_email=${{ secrets.BUDGET_ALERT_EMAIL }}" \
+           -var="cicd_iam_arn=${{ secrets.CICD_IAM_ARN }}" \
+           -out=tfplan
+
+      - name: Upload plan artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: tfplan
+          path: terraform/tfplan
+          retention-days: 1
+
+      - name: Comment plan on PR
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: `## Terraform Plan\n**Status:** ${{ steps.plan.outcome }}\n**Commit:** \`${{ github.sha }}\``
+            })
+
+  # ── Apply ───────────────────────────────────────────────────────────────────
+  apply:
+    name: Terraform Apply
+    runs-on: ubuntu-latest
+    needs: plan
+    environment: prod
+    if: github.ref == 'refs/heads/main' && (github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && github.event.inputs.action == 'apply'))
+    defaults:
+      run:
+        working-directory: ${{ env.WORKING_DIR }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ env.TF_VERSION }}
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id:     ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region:            ${{ vars.AWS_REGION }}
+      
+      - name: Create tfvars
+        run: |
+          cat > terraform.tfvars << EOF
+          aws_region                     = "${{ vars.AWS_REGION }}"
+          project_name                   = "project-bedrock"
+          project_tag                    = "tinyuka-2025-capstone"
+          environment                    = "prod"
+          owner                          = "oluwagbenga-george-oyewole"
+          student_id                     = "${{ vars.STUDENT_ID }}"
+          eks_cluster_version            = "1.34"
+          node_instance_type             = "t3.medium"
+          node_desired_size              = 2
+          node_min_size                  = 1
+          node_max_size                  = 4
+          log_retention_days             = 30
+          budget_limit_usd               = "20"
+          budget_alert_threshold_percent = 80
+          budget_alert_email             = "${{ secrets.BUDGET_ALERT_EMAIL }}"
+          cicd_iam_arn                   = "${{ secrets.CICD_IAM_ARN }}"
+          EOF
+
+      - name: Download plan artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: tfplan
+          path: terraform/
+
+      - name: Terraform Init
+        run: |
+          terraform init \
+            -backend-config="bucket=${{ secrets.TF_STATE_BUCKET }}" \
+            -backend-config="region=${{ vars.AWS_REGION }}"
+
+      - name: Terraform Apply
+        run: |
+           terraform apply \
+            -var="budget_alert_email=${{ secrets.BUDGET_ALERT_EMAIL }}" \
+            -var="cicd_iam_arn=${{ secrets.CICD_IAM_ARN }}" \
+             terraform/tfplan
+
+      - name: Configure kubectl
+        run: |
+          CLUSTER=$(terraform output -raw cluster_name)
+          aws eks update-kubeconfig --region ${{ vars.AWS_REGION }} --name $CLUSTER
+
+      - name: Verify cluster nodes
+        run: kubectl get nodes
+
+      - name: Create retail-app namespace
+        run: |
+          kubectl create namespace retail-app --dry-run=client -o yaml | kubectl apply -f -
+          echo "retail-app namespace ready ✓"
+
+      - name: Post deployment summary
+        run: |
+          echo "## Deployment Summary" >> $GITHUB_STEP_SUMMARY
+          echo "| Output | Value |" >> $GITHUB_STEP_SUMMARY
+          echo "|--------|-------|" >> $GITHUB_STEP_SUMMARY
+          echo "| cluster_name | $(terraform output -raw cluster_name) |" >> $GITHUB_STEP_SUMMARY
+          echo "| cluster_endpoint | $(terraform output -raw cluster_endpoint) |" >> $GITHUB_STEP_SUMMARY
+          echo "| region | $(terraform output -raw region) |" >> $GITHUB_STEP_SUMMARY
+          echo "| vpc_id | $(terraform output -raw vpc_id) |" >> $GITHUB_STEP_SUMMARY
+          echo "| assets_bucket_name | $(terraform output -raw assets_bucket_name) |" >> $GITHUB_STEP_SUMMARY
+
+  # ── Destroy ─────────────────────────────────────────────────────────────────
+  destroy:
+    name: Terraform Destroy
+    runs-on: ubuntu-latest
+    if: github.event_name == 'workflow_dispatch' && github.event.inputs.action == 'destroy'
+    defaults:
+      run:
+        working-directory: ${{ env.WORKING_DIR }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ env.TF_VERSION }}
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id:     ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region:            ${{ vars.AWS_REGION }}
+      
+      - name: Create tfvars
+        run: |
+            cat > terraform.tfvars << EOF
+            aws_region                     = "${{ vars.AWS_REGION }}"
+            project_name                   = "project-bedrock"
+            project_tag                    = "tinyuka-2025-capstone"
+            environment                    = "prod"
+            owner                          = "oluwagbenga-george-oyewole"
+            student_id                     = "${{ vars.STUDENT_ID }}"
+            eks_cluster_version            = "1.34"
+            node_instance_type             = "t3.medium"
+            node_desired_size              = 2
+            node_min_size                  = 1
+            node_max_size                  = 4
+            log_retention_days             = 30
+            budget_limit_usd               = "20"
+            budget_alert_threshold_percent = 80
+            budget_alert_email             = "${{ secrets.BUDGET_ALERT_EMAIL }}"
+            cicd_iam_arn                   = "${{ secrets.CICD_IAM_ARN }}"
+            EOF
+      - name: Terraform Init
+        run: |
+          terraform init \
+            -backend-config="bucket=${{ secrets.TF_STATE_BUCKET }}" \
+            -backend-config="region=${{ vars.AWS_REGION }}"
+
+      - name: Terraform Destroy
+        run: |
+          terraform destroy \
+          -var-file=terraform.tfvars \
+          -var="budget_alert_email=${{ secrets.BUDGET_ALERT_EMAIL }}" \
+          -var="cicd_iam_arn=${{ secrets.CICD_IAM_ARN }}" \
+          -auto-approve
