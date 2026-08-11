@@ -107,9 +107,9 @@ variable "eks_cluster_version" {
 }
 
 variable "node_instance_type" {
-  description = "EC2 instance type for EKS worker nodes. t3.medium = 2 vCPU, 4GB RAM."
+  description = "EC2 instance type for EKS worker nodes. t3.small = 2 vCPU, 4GB RAM."
   type        = string
-  default     = "t3.medium"
+  default     = "t3.small"
 }
 
 variable "node_desired_size" {
