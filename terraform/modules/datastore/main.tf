@@ -1,4 +1,4 @@
- #Why managed over in-cluster?
+#Why managed over in-cluster?
 #   In-cluster databases lose data when pods restart or nodes are replaced.
 #   RDS provides automated backups, point-in-time recovery, and
 #   multi-AZ failover. DynamoDB is serverless and infinitely scalable.
@@ -74,7 +74,7 @@ resource "aws_security_group" "postgresql" {
 # ── RDS MySQL — Catalog Service ───────────────────────────────────────────────
 resource "random_password" "mysql" {
   length  = 16
-  special = false  # Avoid special chars that break connection strings
+  special = false # Avoid special chars that break connection strings
 }
 
 resource "aws_db_instance" "mysql" {
@@ -93,8 +93,8 @@ resource "aws_db_instance" "mysql" {
   vpc_security_group_ids = [aws_security_group.mysql.id]
 
   # Single-AZ — cost guardrail (assessed requirement)
-  multi_az               = false
-  publicly_accessible    = false
+  multi_az            = false
+  publicly_accessible = false
 
   # Backups retained for 7 days
   backup_retention_period = 7
@@ -161,7 +161,7 @@ resource "aws_dynamodb_table" "carts" {
 # Credentials stored in Secrets Manager — never in Helm values or git
 resource "aws_secretsmanager_secret" "mysql" {
   name                    = "${var.project_name}/mysql"
-  recovery_window_in_days = 0  # Instant deletion for dev
+  recovery_window_in_days = 0 # Instant deletion for dev
 
   tags = { Name = "${var.project_name}-mysql-secret" }
 }
