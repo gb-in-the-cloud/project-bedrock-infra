@@ -8,3 +8,7 @@ output "node_role_arn" { value = aws_iam_role.nodes.arn }
 output "node_group_name" { value = aws_eks_node_group.main.node_group_name }
 output "dev_user_arn" { value = aws_iam_user.dev_view.arn }
 output "dev_user_name" { value = aws_iam_user.dev_view.name }
+output "node_security_group_id" {
+  value       = aws_security_group.cluster.id
+  description = "Security group ID of EKS cluster — used to allow DB access from nodes"
+}
