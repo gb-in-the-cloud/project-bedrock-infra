@@ -97,7 +97,7 @@ resource "aws_db_instance" "mysql" {
   publicly_accessible = false
 
   # Backups not retained because of tier level
-  backup_retention_period = 0   
+  backup_retention_period = 0
 
   # On destroy — skip final snapshot for dev environment
   skip_final_snapshot = true
