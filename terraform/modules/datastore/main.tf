@@ -98,8 +98,8 @@ resource "aws_db_instance" "mysql" {
 
   # Backups not retained because of tier level
   backup_retention_period = 0
-  backup_window           = "03:00-04:00"
-  maintenance_window      = "Mon:04:00-Mon:05:00"
+#   backup_window           = "03:00-04:00"
+#   maintenance_window      = "Mon:04:00-Mon:05:00"
 
   # On destroy — skip final snapshot for dev environment
   skip_final_snapshot = true
@@ -133,8 +133,8 @@ resource "aws_db_instance" "postgresql" {
   publicly_accessible = false
 
   backup_retention_period = 0
-  backup_window           = "03:00-04:00"
-  maintenance_window      = "Mon:04:00-Mon:05:00"
+#   backup_window           = "03:00-04:00"
+#   maintenance_window      = "Mon:04:00-Mon:05:00"
 
   skip_final_snapshot = true
   deletion_protection = false
