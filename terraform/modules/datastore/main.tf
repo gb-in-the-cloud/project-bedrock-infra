@@ -96,8 +96,8 @@ resource "aws_db_instance" "mysql" {
   multi_az            = false
   publicly_accessible = false
 
-  # Backups retained for 7 days
-  backup_retention_period = 7
+  # Backups not retained because of tier level
+  backup_retention_period = 0
   backup_window           = "03:00-04:00"
   maintenance_window      = "Mon:04:00-Mon:05:00"
 
@@ -132,7 +132,7 @@ resource "aws_db_instance" "postgresql" {
   multi_az            = false
   publicly_accessible = false
 
-  backup_retention_period = 7
+  backup_retention_period = 0
   backup_window           = "03:00-04:00"
   maintenance_window      = "Mon:04:00-Mon:05:00"
 
