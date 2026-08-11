@@ -150,3 +150,19 @@ module "serverless" {
   student_id   = var.student_id
   cluster_name = module.eks.cluster_name
 }
+
+# =============================================================================
+# MODULE: Datastore
+# Managed AWS data services replacing in-cluster databases.
+# Runs AFTER networking and EKS — needs subnets and node security group.
+# =============================================================================
+module "datastore" {
+  source = "./modules/datastore"
+
+  project_name       = var.project_name
+  project_tag        = var.project_tag
+  environment        = var.environment
+  vpc_id             = module.networking.vpc_id
+  private_subnet_ids = module.networking.private_subnet_ids
+  eks_node_sg_id     = module.eks.node_security_group_id
+}
