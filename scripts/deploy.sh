@@ -52,9 +52,26 @@ tf_apply() {
 
 tf_destroy() {
   check_deps
-  tf_init > /dev/null
-  read -rp "Type 'destroy' to confirm: " CONFIRM
+  # Confirm FIRST before touching anything
+  echo -e "${RED}"
+  read -rp "  Type 'destroy' to confirm: " CONFIRM
+  echo -e "${NC}"
   [[ "$CONFIRM" != "destroy" ]] && { log "Cancelled."; exit 0; }
+
+  # Then clean up Kubernetes resources
+  log "Removing Kubernetes ingress and ALB..."
+  kubectl delete ingress retail-store-ingress \
+    -n retail-app --ignore-not-found=true 2>/dev/null || true
+  helm uninstall aws-load-balancer-controller \
+    -n kube-system 2>/dev/null || true
+  kubectl delete namespace retail-app \
+    --ignore-not-found=true 2>/dev/null || true
+
+  log "Waiting 60s for ALB deprovisioning..."
+  sleep 60
+
+  # Then destroy infrastructure
+  tf_init > /dev/null
   cd "$TF_DIR"
   terraform destroy -var-file=terraform.tfvars -auto-approve
   log "Destroy complete ✓"
