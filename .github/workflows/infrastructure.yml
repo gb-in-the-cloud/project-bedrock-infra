@@ -233,6 +233,29 @@ jobs:
           CLUSTER=$(terraform output -raw cluster_name)
           aws eks update-kubeconfig --region ${{ vars.AWS_REGION }} --name $CLUSTER
 
+      - name: Configure kubectl
+        run: |
+          CLUSTER=$(terraform output -raw cluster_name)
+          aws eks update-kubeconfig --region ${{ vars.AWS_REGION }} --name $CLUSTER
+
+      - name: Install AWS Load Balancer Controller
+        run: |
+          helm repo add eks https://aws.github.io/eks-charts
+          helm repo update
+          VPC_ID=$(terraform output -raw vpc_id)
+          kubectl apply -k "github.com/aws/eks-charts/stable/aws-load-balancer-controller//crds?ref=master"
+          helm upgrade -i aws-load-balancer-controller eks/aws-load-balancer-controller \
+            -n kube-system \
+            --set clusterName=$(terraform output -raw cluster_name) \
+            --set serviceAccount.create=false \
+            --set serviceAccount.name=aws-load-balancer-controller \
+            --set region=${{ vars.AWS_REGION }} \
+            --set vpcId=$(terraform output -raw vpc_id)
+            ----set enableCertManager=false \
+            --set webhookTLS.autogenerate=true \
+            --wait \
+            --timeout 5m
+
       - name: Verify cluster nodes
         run: kubectl get nodes
 
@@ -300,6 +323,19 @@ jobs:
           terraform init \
             -backend-config="bucket=${{ secrets.TF_STATE_BUCKET }}" \
             -backend-config="region=${{ vars.AWS_REGION }}"
+
+      - name: Pre-destroy cleanup
+        run: |
+         CLUSTER=$(terraform output -raw cluster_name) 2>/dev/null || true
+         aws eks update-kubeconfig \
+         --region ${{ vars.AWS_REGION }} \
+         --name "$CLUSTER" 2>/dev/null || true
+         kubectl delete ingress retail-store-ingress \
+         -n retail-app --ignore-not-found=true 2>/dev/null || true
+         helm uninstall aws-load-balancer-controller \
+         -n kube-system --ignore-not-found=true 2>/dev/null || true
+         echo "Waiting for ALB deprovisioning..."
+         sleep 60
 
       - name: Terraform Destroy
         run: |
