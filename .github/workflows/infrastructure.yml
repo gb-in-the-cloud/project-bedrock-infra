@@ -215,10 +215,10 @@ jobs:
       - name: Import EKS Access Entry if exists
         continue-on-error: true
         run: |
-          terraform import \
-            module.eks.aws_eks_access_entry.cicd \
-            "project-bedrock-cluster:${{ secrets.CICD_IAM_ARN }}"
-
+         terraform import \
+         -var-file=terraform.tfvars \
+         module.eks.aws_eks_access_entry.cicd \
+         "project-bedrock-cluster:${{ secrets.CICD_IAM_ARN }}".   
       - name: Import CloudWatch Log Group if exists
         continue-on-error: true
         run: |
