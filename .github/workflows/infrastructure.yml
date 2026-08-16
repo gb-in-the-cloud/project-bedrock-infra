@@ -217,7 +217,7 @@ jobs:
         run: |
           terraform import \
             module.eks.aws_eks_access_entry.cicd \
-            "project-bedrock-cluster:arn:aws:iam::262945455354:user/geebentf"
+            "project-bedrock-cluster:${{ secrets.CICD_IAM_ARN }}"
 
       - name: Import CloudWatch Log Group if exists
         continue-on-error: true
