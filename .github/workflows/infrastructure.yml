@@ -237,25 +237,27 @@ jobs:
         run: |
           CLUSTER=$(terraform output -raw cluster_name)
           aws eks update-kubeconfig --region ${{ vars.AWS_REGION }} --name $CLUSTER
-
       - name: Install AWS Load Balancer Controller
         run: |
-          helm repo add eks https://aws.github.io/eks-charts
-          helm repo update
-          VPC_ID=$(terraform output -raw vpc_id)
-          kubectl apply -k "github.com/aws/eks-charts/stable/aws-load-balancer-controller//crds?ref=master"
-          helm upgrade -i aws-load-balancer-controller eks/aws-load-balancer-controller \
-            -n kube-system \
-            --set clusterName=$(terraform output -raw cluster_name) \
-            --set serviceAccount.create=false \
-            --set serviceAccount.name=aws-load-balancer-controller \
-            --set region=${{ vars.AWS_REGION }} \
-            --set vpcId=$(terraform output -raw vpc_id)
-            ----set enableCertManager=false \
-            --set webhookTLS.autogenerate=true \
-            --wait \
-            --timeout 5m
-
+         VPC_ID=$(terraform output -raw vpc_id)
+         CLUSTER=$(terraform output -raw cluster_name)
+         ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
+         ALB_ROLE_ARN="arn:aws:iam::${ACCOUNT_ID}:role/project-bedrock-alb-controller-role"
+         helm repo add eks https://aws.github.io/eks-charts
+         helm repo update
+         helm upgrade --install aws-load-balancer-controller \
+         eks/aws-load-balancer-controller \
+         --namespace kube-system \
+         --set clusterName="$CLUSTER" \
+         --set serviceAccount.create=true \
+         --set "serviceAccount.annotations.eks\.amazonaws\.com/role-arn=$ALB_ROLE_ARN" \
+         --set region=${{ vars.AWS_REGION }} \
+         --set vpcId="$VPC_ID" \
+         --set enableCertManager=false \
+         --set webhookTLS.autogenerate=true \
+         --wait \
+         --timeout 5m
+         
       - name: Verify cluster nodes
         run: kubectl get nodes
 
