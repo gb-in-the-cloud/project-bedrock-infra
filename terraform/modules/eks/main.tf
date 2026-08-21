@@ -70,19 +70,6 @@ resource "aws_iam_role_policy_attachment" "node_cloudwatch" {
   policy_arn = "arn:aws:iam::aws:policy/CloudWatchAgentServerPolicy"
 }
 
-resource "aws_eks_access_entry" "name" {
-  cluster_name  = aws_eks_cluster.main.name
-  principal_arn = aws_iam_role.cluster.arn
-  type          = "STANDARD"
-
-  lifecycle {
-    ignore_changes = [cluster_name]
-  }
-
-  tags = { Name = "${var.project_name}-cicd-access"
-  }
-
-}
 # ── IAM: Developer User — bedrock-dev-view ────────────────────────────────────
 # Required by assessment. Read-only kubectl access.
 # Developers can inspect and debug but cannot modify cluster resources.
