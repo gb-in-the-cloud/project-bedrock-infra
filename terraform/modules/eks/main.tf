@@ -81,7 +81,7 @@ resource "aws_eks_access_entry" "name" {
 
   tags = { Name = "${var.project_name}-cicd-access"
   }
-  
+
 }
 # ── IAM: Developer User — bedrock-dev-view ────────────────────────────────────
 # Required by assessment. Read-only kubectl access.
@@ -243,7 +243,7 @@ resource "aws_eks_access_entry" "dev_view" {
 
   tags = { Name = "${var.project_name}-dev-view-access"
   }
-  
+
 }
 
 resource "aws_eks_access_policy_association" "dev_view" {
