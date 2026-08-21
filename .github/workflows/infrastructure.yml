@@ -140,6 +140,22 @@ jobs:
             module.eks.aws_eks_access_entry.cicd \
             "project-bedrock-cluster:${{ secrets.CICD_IAM_ARN }}"
 
+      - name: Import EKS dev-view Access Entry if exists
+        continue-on-error: true
+        run: |
+          terraform import \
+            -var-file=terraform.tfvars \
+            module.eks.aws_eks_access_entry.dev_view \
+            "project-bedrock-cluster:${{ secrets.DEV_VIEW_IAM_ARN }}"
+
+      - name: Import EKS dev_view Policy Association if exists
+        continue-on-error: true
+        run: |
+          terraform import \
+            -var-file=terraform.tfvars \
+            module.eks.aws_iam_role_policy_attachment.dev_view \
+            "project-bedrock-cluster#${{secrets.DEV_VIEW_IAM_ARN}}#arn:aws:eks::aws:cluster-access-policy/AmazonEKSViewPolicy"
+
       - name: Import CloudWatch Log Group if exists
         continue-on-error: true
         run: |

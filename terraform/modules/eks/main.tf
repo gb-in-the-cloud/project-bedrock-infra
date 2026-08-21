@@ -221,7 +221,7 @@ resource "aws_eks_access_policy_association" "cicd" {
 # Cannot create, update, or delete resources — least privilege for developers.
 resource "aws_eks_access_entry" "dev_view" {
   cluster_name  = aws_eks_cluster.main.name
-  principal_arn = aws_iam_role.cluster.arn
+  principal_arn = aws_iam_user.dev_view.arn
   type          = "STANDARD"
 
   lifecycle {
