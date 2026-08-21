@@ -21,5 +21,5 @@ To fully clean up after the project:
 
 Free tier accounts restrict backup_retention_period to 0.
 For production deployments with a paid account, set:
-backup_retention_period = 7  # 7-day retention window
+backup_retention_period = No retention for the free tier
 The assessment bonus requires BackupRetentionPeriod > 0 for the resilience objective. This conflicts with the free tier limitation.
