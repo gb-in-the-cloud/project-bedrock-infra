@@ -93,19 +93,6 @@ resource "aws_iam_user" "dev_view" {
   tags = { Purpose = "developer-read-only-eks-access" }
 }
 
-resource "aws_eks_access_entry" "dev_view" {
-  cluster_name  = aws_eks_cluster.main.name
-  principal_arn = aws_iam_role.cluster.arn
-  type          = "STANDARD"
-
-  lifecycle {
-    ignore_changes = [cluster_name]
-  }
-
-  tags = { Name = "${var.project_name}-dev-view-access"
-  }
-  
-}
 # ── KMS: Secrets Encryption ───────────────────────────────────────────────────
 # By default Kubernetes Secrets are base64-encoded in etcd (not encrypted).
 # KMS envelope encryption protects them at rest.
@@ -247,10 +234,16 @@ resource "aws_eks_access_policy_association" "cicd" {
 # Cannot create, update, or delete resources — least privilege for developers.
 resource "aws_eks_access_entry" "dev_view" {
   cluster_name  = aws_eks_cluster.main.name
-  principal_arn = aws_iam_user.dev_view.arn
+  principal_arn = aws_iam_role.cluster.arn
   type          = "STANDARD"
 
-  tags = { Name = "${var.project_name}-dev-view-access" }
+  lifecycle {
+    ignore_changes = [cluster_name]
+  }
+
+  tags = { Name = "${var.project_name}-dev-view-access"
+  }
+  
 }
 
 resource "aws_eks_access_policy_association" "dev_view" {
