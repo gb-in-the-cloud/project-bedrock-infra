@@ -149,6 +149,7 @@ module "serverless" {
   environment  = var.environment
   student_id   = var.student_id
   cluster_name = module.eks.cluster_name
+  dev_view_user_arn = module.eks.dev_user_arn
 }
 
 # =============================================================================
