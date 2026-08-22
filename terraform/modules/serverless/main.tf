@@ -32,13 +32,13 @@ resource "aws_s3_bucket_policy" "assets" {
     Version = "2012-10-17"
     Statement = [
       {
-        Sid       = "AllowDevViewerPutObject"
-        Effect    = "Allow"
+        Sid    = "AllowDevViewerPutObject"
+        Effect = "Allow"
         Principal = {
           AWS = var.dev_view_user_arn
         }
-        Action    = "s3:PutObject"
-        Resource  = [
+        Action = "s3:PutObject"
+        Resource = [
           "${aws_s3_bucket.assets.arn}/*"
         ]
       }
