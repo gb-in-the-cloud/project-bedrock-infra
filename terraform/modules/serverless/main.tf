@@ -143,6 +143,8 @@ data "archive_file" "lambda" {
           clusterName:  process.env.CLUSTER_NAME,
         };
 
+        console.log("Image received: " + (detail.object?.key || "unknown"));
+
         console.log(JSON.stringify({
           level:   'INFO',
           message: 'Asset upload processed',
