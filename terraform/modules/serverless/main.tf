@@ -25,6 +25,27 @@ resource "aws_s3_bucket_versioning" "assets" {
   versioning_configuration { status = "Enabled" }
 }
 
+resource "aws_s3_bucket_policy" "assets" {
+  bucket = aws_s3_bucket.assets.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Sid       = "AllowDevViewerPutObject"
+        Effect    = "Allow"
+        Principal = {
+          AWS = var.dev_view_user_arn
+        }
+        Action    = "s3:PutObject"
+        Resource  = [
+          "${aws_s3_bucket.assets.arn}/*"
+        ]
+      }
+    ]
+  })
+}
+
 resource "aws_s3_bucket_server_side_encryption_configuration" "assets" {
   bucket = aws_s3_bucket.assets.id
 
